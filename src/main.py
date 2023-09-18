@@ -194,7 +194,9 @@ def save_game():
 
 def setDifficultAndRestart(difficult):
     setDifficult(difficult)
+    actualizar_tamaño_ventana()
     restart_game()
+    
 
 def setDifficult(difficult):
     global num_bombas, rows, cols
@@ -238,7 +240,7 @@ def restart_game():
 
 def init_game():
 
-    global rows, cols, contador_bombas, etiqueta_contador_bombas, contador_tiempo, etiqueta_contador_tiempo
+    global rows, cols, contador_bombas, etiqueta_contador_bombas, contador_tiempo, etiqueta_contador_tiempo, menubar
 
     menubar = tk.Menu(root)
 
@@ -273,7 +275,6 @@ def init_game():
             fila.append(boton)
         botones.append(fila)
 
-
 def init_timer():
     global contador_tiempo, timer_id
     # Cancelar el temporizador antes de resetear el contador
@@ -283,7 +284,6 @@ def init_timer():
     etiqueta_contador_tiempo.config(text="Tiempo: " + str(contador_tiempo))
     timer_id = root.after(1000, update_timer)
 
-
 def update_timer():
     global contador_tiempo, timer_id, gameActive
     if not gameActive:
@@ -292,24 +292,34 @@ def update_timer():
     etiqueta_contador_tiempo.config(text="Tiempo: " + str(contador_tiempo))
     timer_id = root.after(1000, update_timer)
 
-
 def actualizar_contador_bombas(valor):
     global contador_bombas, etiqueta_contador_bombas
     contador_bombas += valor
     etiqueta_contador_bombas.config(text="Bombas restantes: " + str(contador_bombas))
 
+def actualizar_tamaño_ventana():
+
+    button_width = botones[0][0].winfo_width()
+    button_height = botones[0][0].winfo_height()
+
+    menubar_height = menubar.winfo_height()
+    etiqueta_contador_bombas_heihgt = etiqueta_contador_bombas.winfo_height()
+
+    print(etiqueta_contador_bombas_heihgt)
+
+    width = (button_width * cols)
+    height = (button_height * rows + menubar_height + etiqueta_contador_bombas_heihgt)
+    root.geometry(f"{width}x{height}")
+
+
+
 ## INIT GAME ##
 root = tk.Tk()
 root.title("Buscaminas")
+root.resizable(False, False)
 
 timer_id = None
-contador_bombas = 40
-etiqueta_contador_bombas = 40
-contador_tiempo = 0
-etiqueta_contador_tiempo = 0
 
-
-timer_id = None
 setDifficult('Medium')
 restart_game()
 root.mainloop()
