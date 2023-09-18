@@ -1,7 +1,26 @@
 import tkinter as tk
+from tkinter import PhotoImage
 import random
 from enum import Enum
 import time
+
+# Enumerado para las configuraciones de los botones
+class BotonConfig(Enum):
+    DEFAULT = {
+        'width': 2, 'height': 1, 'bg': "gray", 'font': ("TkDefaultFont", 10, "bold"), 'text': "", 'relief': "solid"
+    }
+    BOMBA = {
+        'image': None
+    }
+    BOMBA_CHAR = {
+        'bg': "red", 'fg': 'black', 'font': ("TkDefaultFont", 10, "bold"), 'text': "X"
+    }
+    MARCADO = {
+        'bg': "gray", 'font': ("TkDefaultFont", 10, "bold"), 'text': "X"
+    }
+    NUMERIC = {
+        'bg': "white", 'font': ("TkDefaultFont", 10, "bold")
+    }
 
 class Estado(Enum):
     CERO = 0
@@ -59,25 +78,24 @@ def cambiar_estado(i, j, event):
     elif event.num == 3:
 
         if contador_bombas > 0 and botones[i][j]['text'] != "X":
-            botones[i][j].config(bg="gray", font=("TkDefaultFont", 10, "bold"), text="X")
+            botones[i][j].config(**BotonConfig.MARCADO.value)
             actualizar_contador_bombas(-1)
         elif botones[i][j]['text'] != "":
-            botones[i][j].config(bg="gray", font=("TkDefaultFont", 10, "bold"), text="", relief="solid")
+            botones[i][j].config(**BotonConfig.DEFAULT.value)
             actualizar_contador_bombas(1)
-
 
 def actualizar_boton(i, j):
     global rows, cols, gameActive
 
     revelado[i][j] = True
     if estados[i][j] == Estado.BOMBA:
-        botones[i][j].config(bg="red", fg=textColor(estados[i][j]), font=("TkDefaultFont", 10, "bold"), text="X")
+        botones[i][j].config(**BotonConfig.BOMBA_CHAR.value)
         if gameActive:
             gameActive = False
             revelaBombas()
             gameover()
     elif estados[i][j] == Estado.CERO:
-        botones[i][j].config(bg="white", fg=textColor(estados[i][j]), font=("TkDefaultFont", 10, "bold"), text="")
+        botones[i][j].config(**BotonConfig.NUMERIC.value, text="")
         # revela los adyacentes
         for l in range(i-1, i+2):
             for m in range(j-1, j+2):
@@ -87,7 +105,7 @@ def actualizar_boton(i, j):
                     continue
                 actualizar_boton(l,m)   
     else:
-        botones[i][j].config(bg="white", fg=textColor(estados[i][j]), font=("TkDefaultFont", 10, "bold"), text=str(estados[i][j].value))
+        botones[i][j].config(**BotonConfig.NUMERIC.value, fg=textColor(estados[i][j]), text=str(estados[i][j].value))
 
     if gameActive and IsGameWin():
         gameActive = False
@@ -136,8 +154,7 @@ def IsGameWin():
 
 def gameWinLabel():
 
-    global timer
-    root.after_cancel(timer)
+    global timer_id
 
     # Crear un widget Label transparente para mostrar el texto
     label = tk.Label(root, text="", font=("Arial", 25), bg="black")
@@ -154,9 +171,6 @@ def gameWinLabel():
     show_text("YOU WIN THE GAME!!")
 
 def gameover():
-
-    global timer
-    root.after_cancel(timer)
 
     # Crear un widget Label transparente para mostrar el texto
     label = tk.Label(root, text="", font=("Arial", 25), bg="black")
@@ -197,18 +211,19 @@ def setDifficult(difficult):
     else:
         num_bombas = 50
         rows, cols = 18, 24
-    restart_game()
 
 def restart_game():
     global bombas, botones, estados, revelado, gameActive, timer_id, contador_bombas, num_bombas
-    global etiqueta_contador_bombas, contador_tiempo, etiqueta_contador_tiempo, timer
+    global etiqueta_contador_bombas, contador_tiempo, etiqueta_contador_tiempo
 
-    timer_id = None
+    global bomba_imagen
+    bomba_imagen = PhotoImage(file="../img/bomba.png")
+    BotonConfig.BOMBA.value['image'] = bomba_imagen
+
     contador_bombas = num_bombas
     etiqueta_contador_bombas = num_bombas
     contador_tiempo = 0
     etiqueta_contador_tiempo = 0
-    timer = None
 
     bombas = []
     botones = []
@@ -219,6 +234,7 @@ def restart_game():
         widget.destroy()
     init_game()
     init_estados(estados, revelado)
+    init_timer()
 
 def init_game():
 
@@ -247,31 +263,35 @@ def init_game():
     etiqueta_contador_tiempo = tk.Label(root, text="Tiempo: " + str(contador_tiempo))
     etiqueta_contador_tiempo.grid(row=0, column=cols//2, columnspan=cols//2, sticky=tk.E)
 
-    init_timer()
-
     for i in range(rows):
         fila = []            
         for j in range(cols):
-            boton = tk.Button(root, width=2, height=1, bg="gray", font=("TkDefaultFont", 10, "bold"), text="", relief="solid")
+            boton = tk.Button(root, **BotonConfig.DEFAULT.value)
             boton.bind("<Button-1>", lambda event, i=i, j=j: cambiar_estado(i, j, event))
             boton.bind("<Button-3>", lambda event, i=i, j=j: cambiar_estado(i, j, event))
             boton.grid(row=i+1, column=j)
             fila.append(boton)
         botones.append(fila)
 
+
 def init_timer():
     global contador_tiempo, timer_id
-    contador_tiempo = 0
-    etiqueta_contador_tiempo.config(text="Tiempo: " + str(contador_tiempo))
+    # Cancelar el temporizador antes de resetear el contador
     if timer_id:
         root.after_cancel(timer_id)
-    update_timer()
+    contador_tiempo = 0
+    etiqueta_contador_tiempo.config(text="Tiempo: " + str(contador_tiempo))
+    timer_id = root.after(1000, update_timer)
+
 
 def update_timer():
-    global contador_tiempo, timer_id
+    global contador_tiempo, timer_id, gameActive
+    if not gameActive:
+        return
     contador_tiempo += 1
     etiqueta_contador_tiempo.config(text="Tiempo: " + str(contador_tiempo))
     timer_id = root.after(1000, update_timer)
+
 
 def actualizar_contador_bombas(valor):
     global contador_bombas, etiqueta_contador_bombas
@@ -287,9 +307,9 @@ contador_bombas = 40
 etiqueta_contador_bombas = 40
 contador_tiempo = 0
 etiqueta_contador_tiempo = 0
-timer = None
 
 
+timer_id = None
 setDifficult('Medium')
 restart_game()
 root.mainloop()
