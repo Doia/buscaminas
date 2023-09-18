@@ -57,7 +57,14 @@ def cambiar_estado(i, j, event):
     if event.num == 1:
         actualizar_boton(i, j)
     elif event.num == 3:
-        botones[i][j].config(bg="gray", font=("TkDefaultFont", 10, "bold"), text="X")
+
+        if contador_bombas > 0 and botones[i][j]['text'] != "X":
+            botones[i][j].config(bg="gray", font=("TkDefaultFont", 10, "bold"), text="X")
+            actualizar_contador_bombas(-1)
+        elif botones[i][j]['text'] != "":
+            botones[i][j].config(bg="gray", font=("TkDefaultFont", 10, "bold"), text="", relief="solid")
+            actualizar_contador_bombas(1)
+
 
 def actualizar_boton(i, j):
     global rows, cols, gameActive
@@ -128,6 +135,10 @@ def IsGameWin():
     return False
 
 def gameWinLabel():
+
+    global timer
+    root.after_cancel(timer)
+
     # Crear un widget Label transparente para mostrar el texto
     label = tk.Label(root, text="", font=("Arial", 25), bg="black")
     label.place(relx=0.5, rely=0.5, anchor=tk.CENTER)
@@ -143,6 +154,10 @@ def gameWinLabel():
     show_text("YOU WIN THE GAME!!")
 
 def gameover():
+
+    global timer
+    root.after_cancel(timer)
+
     # Crear un widget Label transparente para mostrar el texto
     label = tk.Label(root, text="", font=("Arial", 25), bg="black")
     label.place(relx=0.5, rely=0.5, anchor=tk.CENTER)
@@ -185,7 +200,16 @@ def setDifficult(difficult):
     restart_game()
 
 def restart_game():
-    global bombas, botones, estados, revelado, gameActive
+    global bombas, botones, estados, revelado, gameActive, timer_id, contador_bombas, num_bombas
+    global etiqueta_contador_bombas, contador_tiempo, etiqueta_contador_tiempo, timer
+
+    timer_id = None
+    contador_bombas = num_bombas
+    etiqueta_contador_bombas = num_bombas
+    contador_tiempo = 0
+    etiqueta_contador_tiempo = 0
+    timer = None
+
     bombas = []
     botones = []
     estados = []
@@ -197,6 +221,9 @@ def restart_game():
     init_estados(estados, revelado)
 
 def init_game():
+
+    global rows, cols, contador_bombas, etiqueta_contador_bombas, contador_tiempo, etiqueta_contador_tiempo
+
     menubar = tk.Menu(root)
 
     settingsmenu = tk.Menu(menubar, tearoff=0)
@@ -213,20 +240,55 @@ def init_game():
     # Mostrar el menú
     root.config(menu=menubar)
 
-    global rows, cols
+    contador_bombas = num_bombas
+    etiqueta_contador_bombas = tk.Label(root, text="Bombas restantes: " + str(contador_bombas))
+    etiqueta_contador_bombas.grid(row=0, column=0, columnspan=cols//2, sticky=tk.W)
+
+    etiqueta_contador_tiempo = tk.Label(root, text="Tiempo: " + str(contador_tiempo))
+    etiqueta_contador_tiempo.grid(row=0, column=cols//2, columnspan=cols//2, sticky=tk.E)
+
+    init_timer()
+
     for i in range(rows):
         fila = []            
         for j in range(cols):
             boton = tk.Button(root, width=2, height=1, bg="gray", font=("TkDefaultFont", 10, "bold"), text="", relief="solid")
             boton.bind("<Button-1>", lambda event, i=i, j=j: cambiar_estado(i, j, event))
             boton.bind("<Button-3>", lambda event, i=i, j=j: cambiar_estado(i, j, event))
-            boton.grid(row=i, column=j)
+            boton.grid(row=i+1, column=j)
             fila.append(boton)
         botones.append(fila)
+
+def init_timer():
+    global contador_tiempo, timer_id
+    contador_tiempo = 0
+    etiqueta_contador_tiempo.config(text="Tiempo: " + str(contador_tiempo))
+    if timer_id:
+        root.after_cancel(timer_id)
+    update_timer()
+
+def update_timer():
+    global contador_tiempo, timer_id
+    contador_tiempo += 1
+    etiqueta_contador_tiempo.config(text="Tiempo: " + str(contador_tiempo))
+    timer_id = root.after(1000, update_timer)
+
+def actualizar_contador_bombas(valor):
+    global contador_bombas, etiqueta_contador_bombas
+    contador_bombas += valor
+    etiqueta_contador_bombas.config(text="Bombas restantes: " + str(contador_bombas))
 
 ## INIT GAME ##
 root = tk.Tk()
 root.title("Buscaminas")
+
+timer_id = None
+contador_bombas = 40
+etiqueta_contador_bombas = 40
+contador_tiempo = 0
+etiqueta_contador_tiempo = 0
+timer = None
+
 
 setDifficult('Medium')
 restart_game()
