@@ -16,7 +16,7 @@ class BotonConfig(Enum):
         'bg': "red", 'fg': 'black', 'font': ("TkDefaultFont", 10, "bold"), 'text': "X"
     }
     MARCADO = {
-        'bg': "gray", 'font': ("TkDefaultFont", 10, "bold"), 'text': "X"
+        'bg': "gray", 'fg': "blue", 'font': ("TkDefaultFont", 10, "bold"), 'text': "P"
     }
     NUMERIC = {
         'bg': "white", 'font': ("TkDefaultFont", 10, "bold")
@@ -197,13 +197,12 @@ def setDifficultAndRestart(difficult):
     actualizar_tamaño_ventana()
     restart_game()
     
-
 def setDifficult(difficult):
     global num_bombas, rows, cols
     if difficult == 'Easy':
-        num_bombas = 10
-        rows = 6
-        cols = 8
+        num_bombas = 15
+        rows = 9
+        cols = 12
     elif difficult == 'Medium':
         num_bombas = 50
         rows, cols = 18, 24
@@ -302,13 +301,10 @@ def actualizar_tamaño_ventana():
     button_width = botones[0][0].winfo_width()
     button_height = botones[0][0].winfo_height()
 
-    menubar_height = menubar.winfo_height()
     etiqueta_contador_bombas_heihgt = etiqueta_contador_bombas.winfo_height()
 
-    print(etiqueta_contador_bombas_heihgt)
-
     width = (button_width * cols)
-    height = (button_height * rows + menubar_height + etiqueta_contador_bombas_heihgt)
+    height = (button_height * rows + etiqueta_contador_bombas_heihgt + 20) 
     root.geometry(f"{width}x{height}")
 
 
